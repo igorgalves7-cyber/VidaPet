@@ -1,16 +1,8 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 
-from app.models import Base
+DATABASE_URL = "sqlite:///vidapet.db"
 
-engine = create_engine("sqlite:///vidapet.db")
+engine = create_engine(DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(bind=engine)
-
-
-def criar_tabelas():
-    Base.metadata.create_all(engine)
-
-
-def resetar_banco():
-    Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
+Base = declarative_base()

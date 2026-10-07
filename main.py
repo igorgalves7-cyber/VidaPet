@@ -1,37 +1,44 @@
 from datetime import date
 
-from app.database import SessionLocal, resetar_banco
-from app import crud
+from app import crud, models  # noqa: F401  (models precisa ser importado para criar as tabelas)
+from app.database import Base, SessionLocal, engine
 
 
 def main():
-    resetar_banco()
+    # Recria as tabelas do zero (evita erro de coluna antiga no SQLite)
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
 
-    with SessionLocal() as session:
-        t1 = crud.criar_tutor(session, "Mariana Souza", "(61) 99999-1111", "mariana@email.com")
-        t2 = crud.criar_tutor(session, "Carlos Lima", "(61) 98888-2222", "carlos@email.com")
+    session = SessionLocal()
+    try:
+        # Tutores
+        t1 = crud.criar_tutor(session, "Igor Gabriel", "(61) 99999-1111", "igor.alves@email.com")
+        t2 = crud.criar_tutor(session, "Sarah Isabela", "(61) 98888-2222", "sarah.isa@email.com")
 
-        a1 = crud.criar_animal(session, "Thor", "Cachorro", t1.id, "Labrador", date(2020, 3, 10))
-        a2 = crud.criar_animal(session, "Mel", "Gato", t1.id, "Siamês", date(2021, 7, 25))
-        a3 = crud.criar_animal(session, "Bidu", "Cachorro", t2.id, "Poodle", date(2019, 1, 5))
+        # Animais
+        a1 = crud.criar_animal(session, "Thor", "Cachorro", "Labrador", t1.id)
+        a2 = crud.criar_animal(session, "Mimi", "Gato", "Siamês", t1.id)
+        a3 = crud.criar_animal(session, "Rex", "Cachorro", "Pastor Alemão", t2.id)
 
-        crud.criar_atendimento(session, a1.id, date(2026, 9, 1), "Vacina antirrábica", 80.0)
-        crud.criar_atendimento(session, a1.id, date(2026, 9, 15), "Consulta de rotina", 120.0)
-        crud.criar_atendimento(session, a2.id, date(2026, 9, 20), "Castração", 450.0)
-        crud.criar_atendimento(session, a3.id, date(2026, 10, 2), "Limpeza dentária", 200.0)
+        # Atendimentos
+        crud.criar_atendimento(session, a1.id, date(2026, 9, 1), "Vacina antirrábica")
+        crud.criar_atendimento(session, a2.id, date(2026, 9, 3), "Consulta de rotina")
+        crud.criar_atendimento(session, a3.id, date(2026, 9, 5), "Vermifugação")
 
-        print("=== Tutores e seus animais ===")
-        for tutor in crud.listar_tutores(session):
-            print(f"{tutor.nome} -> {', '.join(a.nome for a in tutor.animais)}")
+        # Demonstração
+        print("=== TUTORES ===")
+        for t in crud.listar_tutores(session):
+            print(f"{t.id} - {t.nome} | {t.telefone} | {t.email}")
 
-        print("\n=== Atendimentos ===")
+        print("\n=== ANIMAIS ===")
+        for a in crud.listar_animais(session):
+            print(f"{a.id} - {a.nome} ({a.especie}, {a.raca}) | Tutor: {a.tutor.nome}")
+
+        print("\n=== ATENDIMENTOS ===")
         for at in crud.listar_atendimentos(session):
-            print(f"{at.data} | {at.animal.nome} (tutor: {at.animal.tutor.nome}) "
-                  f"| {at.descricao} | R$ {at.valor:.2f}")
-
-        print("\n=== Total gasto por tutor ===")
-        for nome, total in crud.total_por_tutor(session):
-            print(f"{nome}: R$ {total:.2f}")
+            print(f"{at.id} - {at.data} | {at.animal.nome} | {at.descricao}")
+    finally:
+        session.close()
 
 
 if __name__ == "__main__":

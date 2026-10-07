@@ -1,48 +1,34 @@
-from datetime import date
-from sqlalchemy import select, func
-from sqlalchemy.orm import Session
-
-from app.models import Tutor, Animal, Atendimento
+from app.models import Animal, Atendimento, Tutor
 
 
-def criar_tutor(session: Session, nome: str, telefone: str, email: str | None = None) -> Tutor:
+def criar_tutor(session, nome, telefone=None, email=None):
     tutor = Tutor(nome=nome, telefone=telefone, email=email)
     session.add(tutor)
     session.commit()
     return tutor
 
 
-def criar_animal(session: Session, nome: str, especie: str, tutor_id: int,
-                 raca: str | None = None, data_nascimento: date | None = None) -> Animal:
-    animal = Animal(nome=nome, especie=especie, raca=raca,
-                    data_nascimento=data_nascimento, tutor_id=tutor_id)
+def criar_animal(session, nome, especie, raca, tutor_id):
+    animal = Animal(nome=nome, especie=especie, raca=raca, tutor_id=tutor_id)
     session.add(animal)
     session.commit()
     return animal
 
 
-def criar_atendimento(session: Session, animal_id: int, data: date,
-                      descricao: str, valor: float) -> Atendimento:
-    atendimento = Atendimento(animal_id=animal_id, data=data,
-                              descricao=descricao, valor=valor)
+def criar_atendimento(session, animal_id, data, descricao):
+    atendimento = Atendimento(animal_id=animal_id, data=data, descricao=descricao)
     session.add(atendimento)
     session.commit()
     return atendimento
 
 
-def listar_tutores(session: Session) -> list[Tutor]:
-    return list(session.scalars(select(Tutor)))
+def listar_tutores(session):
+    return session.query(Tutor).all()
 
 
-def listar_atendimentos(session: Session) -> list[Atendimento]:
-    return list(session.scalars(select(Atendimento).order_by(Atendimento.data)))
+def listar_animais(session):
+    return session.query(Animal).all()
 
 
-def total_por_tutor(session: Session):
-    consulta = (
-        select(Tutor.nome, func.sum(Atendimento.valor))
-        .join(Animal, Animal.tutor_id == Tutor.id)
-        .join(Atendimento, Atendimento.animal_id == Animal.id)
-        .group_by(Tutor.nome)
-    )
-    return session.execute(consulta).all()
+def listar_atendimentos(session):
+    return session.query(Atendimento).order_by(Atendimento.data).all()

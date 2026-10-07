@@ -1,44 +1,39 @@
-from datetime import date
-from sqlalchemy import ForeignKey, String, Date, Float
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy import Column, Date, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
 
-
-class Base(DeclarativeBase):
-    pass
+from app.database import Base
 
 
 class Tutor(Base):
     __tablename__ = "tutores"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    nome: Mapped[str] = mapped_column(String(100))
-    telefone: Mapped[str] = mapped_column(String(20))
-    email: Mapped[str | None] = mapped_column(String(100), unique=True)
+    id = Column(Integer, primary_key=True)
+    nome = Column(String(100), nullable=False)
+    telefone = Column(String(20))
+    email = Column(String(100))
 
-    animais: Mapped[list["Animal"]] = relationship(back_populates="tutor")
+    animais = relationship("Animal", back_populates="tutor")
 
 
 class Animal(Base):
     __tablename__ = "animais"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    nome: Mapped[str] = mapped_column(String(100))
-    especie: Mapped[str] = mapped_column(String(50))
-    raca: Mapped[str | None] = mapped_column(String(50))
-    data_nascimento: Mapped[date | None] = mapped_column(Date)
-    tutor_id: Mapped[int] = mapped_column(ForeignKey("tutores.id"))
+    id = Column(Integer, primary_key=True)
+    nome = Column(String(100), nullable=False)
+    especie = Column(String(50), nullable=False)
+    raca = Column(String(50))
+    tutor_id = Column(Integer, ForeignKey("tutores.id"), nullable=False)
 
-    tutor: Mapped["Tutor"] = relationship(back_populates="animais")
-    atendimentos: Mapped[list["Atendimento"]] = relationship(back_populates="animal")
+    tutor = relationship("Tutor", back_populates="animais")
+    atendimentos = relationship("Atendimento", back_populates="animal")
 
 
 class Atendimento(Base):
     __tablename__ = "atendimentos"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    data: Mapped[date] = mapped_column(Date)
-    descricao: Mapped[str] = mapped_column(String(255))
-    valor: Mapped[float] = mapped_column(Float)
-    animal_id: Mapped[int] = mapped_column(ForeignKey("animais.id"))
+    id = Column(Integer, primary_key=True)
+    animal_id = Column(Integer, ForeignKey("animais.id"), nullable=False)
+    data = Column(Date, nullable=False)
+    descricao = Column(String(200), nullable=False)
 
-    animal: Mapped["Animal"] = relationship(back_populates="atendimentos")
+    animal = relationship("Animal", back_populates="atendimentos")
